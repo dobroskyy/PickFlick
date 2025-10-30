@@ -5,24 +5,27 @@
 //  Created by Максим Доброжинский on 29.10.2025.
 //
 
-import UIKit
+import Foundation
 
 class NetworkService {
 
     let token = APIConfig.tmdbToken
+    var language: String = "en-US"
+    var category: String = "popular"
+    
 
-    func buildingURL() -> URL? {
-        var components = URLComponents(string: "https://api.themoviedb.org/3/movie/popular")
-        components?.queryItems = [
-            URLQueryItem(name: "language", value: "en-US"),
-            URLQueryItem(name: "page", value: "1")
-        ]
+    func makeURL(page: Int = 1) -> URL? {
+        var components = URLComponents(string: "https://api.themoviedb.org/3/movie/\(self.category)")
+         components?.queryItems = [
+            URLQueryItem(name: "language", value: self.language),
+             URLQueryItem(name: "page", value: "\(page)")
+         ]
         return components?.url
     }
     
     
-    func request() throws -> URLRequest {
-        guard let url = buildingURL() else {
+    func makeRequest(page: Int = 1) throws -> URLRequest {
+        guard let url = makeURL(page: page) else {
             throw URLError(.badURL)
         }
         var request = URLRequest(url: url)
@@ -37,21 +40,29 @@ class NetworkService {
         
     }
     
-    func fetchData() async throws -> Data {
-        let req = try request()
+    func fetchMovieData(page: Int = 1) async throws -> Data {
+        let req = try makeRequest(page: page)
         let (data, _) = try await URLSession.shared.data(for: req)
-        print(String(decoding: data, as: UTF8.self))
-        
         return data
         
     }
     
-    func fetchMovieTitles() async throws -> [String] {
-        let data = try await fetchData()
-        let response = try JSONDecoder().decode(MovieResponse.self, from: data)
-        return response.results.map { $0.title }
-    }
+    func decodeMovieResponse(from data: Data) throws -> MovieResponse {
+         return try JSONDecoder().decode(MovieResponse.self, from: data)
+     }
     
+    func fetchMovies(pageCount: Int = 10) async throws -> [Movie] {
+        var allMovies: [Movie] = []
+        
+        for page in 1...pageCount {
+            let data = try await fetchMovieData(page: page)
+            let response = try decodeMovieResponse(from: data)
+            allMovies.append(contentsOf: response.results)
+        }
+        
+        return allMovies
+    }
         
 }
 
+ 
