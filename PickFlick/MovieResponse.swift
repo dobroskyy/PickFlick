@@ -14,6 +14,18 @@ struct MovieResponse: Codable {
 struct Movie: Codable {
     let title: String
     let posterPath: String?
+    let adult: Bool
+    let backdropPath: String?
+    let id: Int
+    let originalLanguage: String
+    let originalTitle: String
+    let releaseDate: String
+    let genreIds: [Int]
+    let popularity: Double
+    let voteAverage: Double
+    let overview: String
+    let video: Bool
+    
     
     var fullPosterURL: URL? {
         guard let posterPath = posterPath else { return nil }
@@ -21,7 +33,18 @@ struct Movie: Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case title
+        case adult
+        case backdropPath = "backdrop_path"
+        case genreIds = "genre_ids"
+        case id
+        case originalLanguage = "original_language"
+        case originalTitle = "original_title"
+        case overview
+        case popularity
         case posterPath = "poster_path"
+        case releaseDate = "release_date"
+        case title
+        case voteAverage = "vote_average"
+        case video
     }
 }

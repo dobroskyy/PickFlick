@@ -8,11 +8,12 @@
 import UIKit
 
 class RandomMovieViewController: UIViewController {
-
+    
     var movies: [Movie] = []
+    var currentMovie: Movie?
     let pageCounts = [1, 5, 10]
     let networkService = NetworkService()
-
+    
     let movieTitleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -34,7 +35,6 @@ class RandomMovieViewController: UIViewController {
         label.font = UIFont.systemFont(ofSize: 18, weight: .regular)
         return label
     }()
-    
     
     lazy var randomButton: UIButton = {
         let button = UIButton(type: .system)
@@ -61,6 +61,14 @@ class RandomMovieViewController: UIViewController {
         return control
     }()
     
+    lazy var moreDetailsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("More Details", for: .normal)
+        button.addTarget(self, action: #selector(showMoreDetails), for: .touchUpInside)
+        button.isHidden = true
+        return button
+    }()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,23 +76,19 @@ class RandomMovieViewController: UIViewController {
         setupUI()
         loadMovies()
     }
-
+    
     @objc func loadMovies() {
         activityIndicator.startAnimating()
         
         Task {
-            
             defer { activityIndicator.stopAnimating() }
-            
             do {
                 movies = try await networkService.fetchMovies(pageCount: pageCounts[segmentedControl.selectedSegmentIndex])
                 currentFilmCountLabel.text = "Showing \(movies.count) films"
-                //showRandomMovie()
             } catch {
                 movieTitleLabel.text = "Error: \(error.localizedDescription)"
             }
         }
-        
     }
     
     @objc func showRandomMovie() {
@@ -92,15 +96,16 @@ class RandomMovieViewController: UIViewController {
             movieTitleLabel.text = "No movies available"
             return
         }
+        
+        moreDetailsButton.isHidden = false
         movieTitleLabel.text = randomMovie.title
+        currentMovie = randomMovie
         
         
         guard let posterURL = randomMovie.fullPosterURL else {
             posterOfMovie.image = UIImage(systemName: "film")
             return
         }
-        
-        
         Task {
             do {
                 let (data, _) = try await URLSession.shared.data(from: posterURL)
@@ -118,6 +123,15 @@ class RandomMovieViewController: UIViewController {
         
     }
     
+    @objc func showMoreDetails() {
+        guard let currentMovie = currentMovie else {
+            return
+        }
+        
+        let vc = MovieDetailViewController(movie: currentMovie)
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
     func setupUI() {
         view.addSubview(movieTitleLabel)
         view.addSubview(randomButton)
@@ -125,6 +139,7 @@ class RandomMovieViewController: UIViewController {
         view.addSubview(segmentedControl)
         view.addSubview(currentFilmCountLabel)
         view.addSubview(posterOfMovie)
+        view.addSubview(moreDetailsButton)
         
         movieTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         randomButton.translatesAutoresizingMaskIntoConstraints = false
@@ -132,6 +147,12 @@ class RandomMovieViewController: UIViewController {
         segmentedControl.translatesAutoresizingMaskIntoConstraints = false
         currentFilmCountLabel.translatesAutoresizingMaskIntoConstraints = false
         posterOfMovie.translatesAutoresizingMaskIntoConstraints = false
+        moreDetailsButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            moreDetailsButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            moreDetailsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
         
         NSLayoutConstraint.activate([
             posterOfMovie.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -147,7 +168,9 @@ class RandomMovieViewController: UIViewController {
         ])
         NSLayoutConstraint.activate([
             randomButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            randomButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 400)
+            randomButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 300),
+            randomButton.widthAnchor.constraint(equalToConstant: 100),
+            randomButton.heightAnchor.constraint(equalToConstant: 50)
             
         ])
         
@@ -159,13 +182,13 @@ class RandomMovieViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            segmentedControl.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -350)
+            segmentedControl.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -300)
             
         ])
         
         NSLayoutConstraint.activate([
             currentFilmCountLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            currentFilmCountLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -300)
+            currentFilmCountLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -250)
             
         ])
         
