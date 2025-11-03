@@ -96,29 +96,19 @@ class MovieDetailViewController: UIViewController {
             posterImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             posterImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             posterImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            posterImageView.heightAnchor.constraint(equalToConstant: 300)
-        ])
-        
-        NSLayoutConstraint.activate([
+            posterImageView.heightAnchor.constraint(equalToConstant: 300),
             titleLabel.topAnchor.constraint(equalTo: posterImageView.bottomAnchor, constant: 16),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
-        ])
-        
-        NSLayoutConstraint.activate([
+            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             voteAverageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             voteAverageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            
             releaseDateLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             releaseDateLabel.leadingAnchor.constraint(equalTo: voteAverageLabel.trailingAnchor, constant: 16),
-            releaseDateLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16)
-        ])
-        
-        NSLayoutConstraint.activate([
+            releaseDateLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
             overviewLabel.topAnchor.constraint(equalTo: voteAverageLabel.bottomAnchor, constant: 16),
             overviewLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             overviewLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            overviewLabel.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            overviewLabel.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
         ])
         
     }

@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct MovieResponse: Codable {
+struct MovieResponse: Codable, Hashable {
     let results: [Movie]
 }
 
-struct Movie: Codable {
+struct Movie: Codable, Hashable {
     let title: String
     let posterPath: String?
     let adult: Bool
@@ -26,6 +26,13 @@ struct Movie: Codable {
     let overview: String
     let video: Bool
     
+    static func == (lhs: Movie, rhs: Movie) -> Bool {
+        return lhs.id == rhs.id
+     }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
     
     var fullPosterURL: URL? {
         guard let posterPath = posterPath else { return nil }

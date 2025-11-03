@@ -10,7 +10,7 @@ import Foundation
 class NetworkService {
     
     let token = APIConfig.tmdbToken
-    var language: String = "en-US"
+    var language: String = "ru-RU"
     var category: String = "popular"
     
     
@@ -46,13 +46,20 @@ class NetworkService {
         return try JSONDecoder().decode(MovieResponse.self, from: data)
     }
     
-    func fetchMovies(pageCount: Int = 10) async throws -> [Movie] {
+    func fetchMovies() async throws -> [Movie] {
         var allMovies: [Movie] = []
-        for page in 1...pageCount {
+        for page in 1...25 {
             let data = try await fetchMovieData(page: page)
             let response = try decodeMovieResponse(from: data)
             allMovies.append(contentsOf: response.results)
         }
         return allMovies
     }
+    
+    func fetchPosterData(posterURL: URL) async throws -> Data {
+        
+            let (data, _) = try await URLSession.shared.data(from: posterURL)
+            return data
+
+        }
 }

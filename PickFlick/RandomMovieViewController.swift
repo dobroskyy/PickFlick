@@ -9,15 +9,22 @@ import UIKit
 
 class RandomMovieViewController: UIViewController {
     
-    var movies: [Movie] = []
+    var movies: Set<Movie> = []
+    var viewedMovies: [ViewedMovie] = []
     var currentMovie: Movie?
-    let pageCounts = [1, 5, 10]
     let networkService = NetworkService()
+    
+    let infoAlert: UIAlertController = {
+        let alert = UIAlertController()
+        alert.message = "Список пуст"
+        alert.addAction(.init(title: "Назад", style: .cancel))
+        return alert
+    }()
     
     let movieTitleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        label.font = UIFont.systemFont(ofSize: 16, weight: .light)
         return label
     }()
     
@@ -52,20 +59,19 @@ class RandomMovieViewController: UIViewController {
         return indicator
     }()
     
-    lazy var segmentedControl: UISegmentedControl = {
-        let control = UISegmentedControl(items: pageCounts.map { pageValue in
-            return String(pageValue)
-        })
-        control.selectedSegmentIndex = 2
-        control.addTarget(self, action: #selector(loadMovies), for: .valueChanged)
-        return control
-    }()
-    
     lazy var moreDetailsButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("More Details", for: .normal)
         button.addTarget(self, action: #selector(showMoreDetails), for: .touchUpInside)
         button.isHidden = true
+        return button
+    }()
+    
+    lazy var showHistoryButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Посмотреть историю", for: .normal)
+        button.addTarget(self, action: #selector(showViewedHistory), for: .touchUpInside)
+        
         return button
     }()
     
@@ -83,8 +89,8 @@ class RandomMovieViewController: UIViewController {
         Task {
             defer { activityIndicator.stopAnimating() }
             do {
-                movies = try await networkService.fetchMovies(pageCount: pageCounts[segmentedControl.selectedSegmentIndex])
-                currentFilmCountLabel.text = "Showing \(movies.count) films"
+                movies = try await Set(networkService.fetchMovies())
+                currentFilmCountLabel.text = "Загружено \(movies.count) фильмов"
             } catch {
                 movieTitleLabel.text = "Error: \(error.localizedDescription)"
             }
@@ -100,7 +106,9 @@ class RandomMovieViewController: UIViewController {
         moreDetailsButton.isHidden = false
         movieTitleLabel.text = randomMovie.title
         currentMovie = randomMovie
-        
+        viewedMovies.append(ViewedMovie(movie: randomMovie, viewedDate: Date()))
+        movies.remove(randomMovie)
+        currentFilmCountLabel.text = "Загружено \(movies.count) фильмов"
         
         guard let posterURL = randomMovie.fullPosterURL else {
             posterOfMovie.image = UIImage(systemName: "film")
@@ -108,11 +116,9 @@ class RandomMovieViewController: UIViewController {
         }
         Task {
             do {
-                let (data, _) = try await URLSession.shared.data(from: posterURL)
-                if let image = UIImage(data: data) {
-                    await MainActor.run {
-                        posterOfMovie.image = image
-                    }
+                let imageData = try await networkService.fetchPosterData(posterURL: posterURL)
+                await MainActor.run {
+                    posterOfMovie.image = UIImage(data: imageData)
                 }
             } catch {
                 await MainActor.run {
@@ -120,7 +126,6 @@ class RandomMovieViewController: UIViewController {
                 }
             }
         }
-        
     }
     
     @objc func showMoreDetails() {
@@ -132,61 +137,51 @@ class RandomMovieViewController: UIViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
+    @objc func showViewedHistory() {
+        
+        guard !viewedMovies.isEmpty else {
+            self.present(infoAlert, animated: true)
+            return
+        }
+        
+        let vc = HistoryViewController(arrayOfViewedMovies: viewedMovies, networkService: networkService)
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
     func setupUI() {
         view.addSubview(movieTitleLabel)
         view.addSubview(randomButton)
         view.addSubview(activityIndicator)
-        view.addSubview(segmentedControl)
         view.addSubview(currentFilmCountLabel)
         view.addSubview(posterOfMovie)
         view.addSubview(moreDetailsButton)
+        view.addSubview(showHistoryButton)
         
         movieTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         randomButton.translatesAutoresizingMaskIntoConstraints = false
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        segmentedControl.translatesAutoresizingMaskIntoConstraints = false
         currentFilmCountLabel.translatesAutoresizingMaskIntoConstraints = false
         posterOfMovie.translatesAutoresizingMaskIntoConstraints = false
         moreDetailsButton.translatesAutoresizingMaskIntoConstraints = false
+        showHistoryButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            moreDetailsButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            moreDetailsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
-        ])
-        
-        NSLayoutConstraint.activate([
+            showHistoryButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            showHistoryButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -200),
+            moreDetailsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            moreDetailsButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 170),
             posterOfMovie.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             posterOfMovie.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             posterOfMovie.widthAnchor.constraint(equalToConstant: 200),
-            posterOfMovie.heightAnchor.constraint(equalToConstant: 300)
-        ])
-        
-        NSLayoutConstraint.activate([
+            posterOfMovie.heightAnchor.constraint(equalToConstant: 300),
             movieTitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            movieTitleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 200)
-            
-        ])
-        NSLayoutConstraint.activate([
+            movieTitleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 200),
             randomButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             randomButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 300),
             randomButton.widthAnchor.constraint(equalToConstant: 100),
-            randomButton.heightAnchor.constraint(equalToConstant: 50)
-            
-        ])
-        
-        NSLayoutConstraint.activate([
+            randomButton.heightAnchor.constraint(equalToConstant: 50),
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 200)
-            
-        ])
-        
-        NSLayoutConstraint.activate([
-            segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            segmentedControl.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -300)
-            
-        ])
-        
-        NSLayoutConstraint.activate([
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 200),
             currentFilmCountLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             currentFilmCountLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -250)
             
