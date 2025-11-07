@@ -9,6 +9,8 @@ import UIKit
 
 class HistoryCustomCell: UITableViewCell {
     
+    var currentTask: Task<Void, Never>?
+    
     let posterImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -40,15 +42,20 @@ class HistoryCustomCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        currentTask?.cancel()
+        posterImageView.image = UIImage(systemName: "film")
+        
+    }
+    
     func setupUI() {
         contentView.addSubview(posterImageView)
         contentView.addSubview(titleLabel)
         contentView.addSubview(dateLabel)
-
         posterImageView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
-        
         setupConstraints()
     }
     
@@ -69,20 +76,17 @@ class HistoryCustomCell: UITableViewCell {
     }
     
     func configure(with viewedMovie: ViewedMovie, networkService: NetworkService) {
-        
         titleLabel.text = viewedMovie.movie.title
-
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         formatter.locale = Locale(identifier: "ru_RU")
         dateLabel.text = formatter.string(from: viewedMovie.viewedDate)
-        
         guard let posterURL = viewedMovie.movie.fullPosterURL else {
             posterImageView.image = UIImage(systemName: "film")
             return
         }
-        Task {
+        currentTask = Task {
             do {
                 let imageData = try await networkService.fetchPosterData(posterURL: posterURL)
                 await MainActor.run {
@@ -94,7 +98,5 @@ class HistoryCustomCell: UITableViewCell {
                 }
             }
         }
-
     }
-    
 }

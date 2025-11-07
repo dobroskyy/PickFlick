@@ -50,13 +50,10 @@ class MovieDetailViewController: UIViewController {
         Task {
             await fetchImage()
         }
-        
-        
         titleLabel.text = movie.title
         overviewLabel.text = movie.overview
         voteAverageLabel.text = "Vote average: \(movie.voteAverage)"
         releaseDateLabel.text = "Release date: \(movie.releaseDate)"
-        
     }
     
     func fetchImage() async {
@@ -64,7 +61,6 @@ class MovieDetailViewController: UIViewController {
             posterImageView.image = UIImage(systemName: "film")
             return
         }
-        
         do {
             let (data, _) = try await URLSession.shared.data(from: posterURL)
             if let image = UIImage(data: data) {

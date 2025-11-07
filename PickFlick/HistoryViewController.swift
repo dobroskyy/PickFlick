@@ -26,14 +26,12 @@ class HistoryViewController: UIViewController {
         view.addSubview(historyTableView)
         view.backgroundColor = .white
         historyTableView.translatesAutoresizingMaskIntoConstraints = false
-        
         NSLayoutConstraint.activate([
             historyTableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             historyTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             historyTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             historyTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
     }
     
     init(arrayOfViewedMovies: [ViewedMovie], networkService: NetworkService) {
@@ -41,12 +39,9 @@ class HistoryViewController: UIViewController {
         self.networkService = networkService
         super.init(nibName: nil, bundle: nil)
     }
-    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    
 }
 
 extension HistoryViewController: UITableViewDataSource {
@@ -56,7 +51,6 @@ extension HistoryViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
         let cell = tableView.dequeueReusableCell(withIdentifier: "HistoryCustomCell", for: indexPath) as! HistoryCustomCell
         let viewedMovie = arrayOfViewedMovies[indexPath.row]
         cell.configure(with: viewedMovie, networkService: networkService)
