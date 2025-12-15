@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ViewedMovie {
+struct ViewedMovie: Codable {
     let movie: Movie
     let viewedDate: Date
 }

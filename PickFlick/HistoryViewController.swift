@@ -9,7 +9,9 @@ import UIKit
 
 class HistoryViewController: UIViewController {
     
-    var arrayOfViewedMovies: [ViewedMovie]
+    private var history: [ViewedMovie] {
+        return MovieHistoryManager.shared.getHistory()
+    }
     var networkService: NetworkService
     
     lazy var historyTableView: UITableView = {
@@ -34,8 +36,12 @@ class HistoryViewController: UIViewController {
         ])
     }
     
-    init(arrayOfViewedMovies: [ViewedMovie], networkService: NetworkService) {
-        self.arrayOfViewedMovies = arrayOfViewedMovies
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        historyTableView.reloadData()
+    }
+    
+    init(networkService: NetworkService) {
         self.networkService = networkService
         super.init(nibName: nil, bundle: nil)
     }
@@ -47,12 +53,12 @@ class HistoryViewController: UIViewController {
 extension HistoryViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return arrayOfViewedMovies.count
+        return history.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "HistoryCustomCell", for: indexPath) as! HistoryCustomCell
-        let viewedMovie = arrayOfViewedMovies[indexPath.row]
+        let viewedMovie = history[indexPath.row]
         cell.configure(with: viewedMovie, networkService: networkService)
         return cell
     }

@@ -10,7 +10,6 @@ import UIKit
 class RandomMovieViewController: UIViewController {
     
     var movies: Set<Movie> = []
-    var viewedMovies: [ViewedMovie] = []
     var currentMovie: Movie?
     let networkService = NetworkService()
     
@@ -106,7 +105,7 @@ class RandomMovieViewController: UIViewController {
         moreDetailsButton.isHidden = false
         movieTitleLabel.text = randomMovie.title
         currentMovie = randomMovie
-        viewedMovies.append(ViewedMovie(movie: randomMovie, viewedDate: Date()))
+        MovieHistoryManager.shared.saveViewedMovie(ViewedMovie(movie: randomMovie, viewedDate: Date()))
         movies.remove(randomMovie)
         currentFilmCountLabel.text = "Загружено \(movies.count) фильмов"
         
@@ -139,12 +138,12 @@ class RandomMovieViewController: UIViewController {
     
     @objc func showViewedHistory() {
         
-        guard !viewedMovies.isEmpty else {
+        guard !MovieHistoryManager.shared.getHistory().isEmpty else {
             self.present(infoAlert, animated: true)
             return
         }
         
-        let vc = HistoryViewController(arrayOfViewedMovies: viewedMovies, networkService: networkService)
+        let vc = HistoryViewController(networkService: networkService)
         navigationController?.pushViewController(vc, animated: true)
     }
     
